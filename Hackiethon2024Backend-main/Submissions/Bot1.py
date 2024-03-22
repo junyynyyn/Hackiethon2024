@@ -37,6 +37,7 @@ moves = SECONDARY,
 moves_iter = iter(moves)
 
 # TODO FOR PARTICIPANT: WRITE YOUR WINNING BOT
+# Ultra Aggro Bot
 class Script:
     def __init__(self):
         self.primary = PRIMARY_SKILL

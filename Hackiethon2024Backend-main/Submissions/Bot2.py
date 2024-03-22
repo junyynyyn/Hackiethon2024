@@ -10,7 +10,7 @@ from Game.gameSettings import HP, LEFTBORDER, RIGHTBORDER, LEFTSTART, RIGHTSTART
 # SECONDARY CAN BE : Hadoken, Grenade, Boomerang, Bear Trap
 
 # TODO FOR PARTICIPANT: Set primary and secondary skill here
-PRIMARY_SKILL = TeleportSkill
+PRIMARY_SKILL = UppercutSkill
 SECONDARY_SKILL = Hadoken
 
 #constants, for easier move return
@@ -37,6 +37,7 @@ moves = SECONDARY,
 moves_iter = iter(moves)
 
 # TODO FOR PARTICIPANT: WRITE YOUR WINNING BOT
+# Zoning Bot
 class Script:
     def __init__(self):
         self.primary = PRIMARY_SKILL
@@ -48,13 +49,21 @@ class Script:
     
     # MAIN FUNCTION that returns a single move to the game manager
     def get_move(self, player, enemy, player_projectiles, enemy_projectiles):
-        if not secondary_on_cooldown(player):
-            return SECONDARY
-        
         distance = abs(get_pos(player)[0] - get_pos(enemy)[0])
-        if distance < 3:
-            return LIGHT
+        position = get_pos(player)
+        enemy_pos = get_pos(enemy)
+
+        if distance <= 2:
+            if (enemy_pos[1] >= 1):
+                return PRIMARY
+            if (position[0] == 0 or position[0] == 15 and distance <= 2):
+                    return JUMP_FORWARD
+            return BACK
+        else:
+            if not secondary_on_cooldown(player):
+                return SECONDARY
+            else:
+                NOMOVE
         
-        return FORWARD
         return NOMOVE
         
