@@ -56,4 +56,5 @@ class Script:
             return LIGHT
         
         return FORWARD
+        return NOMOVE
         
