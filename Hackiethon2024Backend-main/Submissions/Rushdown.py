@@ -10,8 +10,8 @@ from Game.gameSettings import HP, LEFTBORDER, RIGHTBORDER, LEFTSTART, RIGHTSTART
 # SECONDARY CAN BE : Hadoken, Grenade, Boomerang, Bear Trap
 
 # TODO FOR PARTICIPANT: Set primary and secondary skill here
-PRIMARY_SKILL = DashAttackSkill
-SECONDARY_SKILL = SuperArmorSkill
+PRIMARY_SKILL = Meditate
+SECONDARY_SKILL = SuperSaiyanSkill
 
 #constants, for easier move return
 #movements
@@ -44,6 +44,7 @@ class Script:
         self.secondary = SECONDARY_SKILL
         # States = [OFFENSIVE, DEFENSIVE, NEUTRAL]
         #Walls are at 0, 15
+        self.state = "OFFENSIVE"
         self.combocount = 0
         
     # DO NOT TOUCH
@@ -64,9 +65,43 @@ class Script:
         if (get_stun_duration(enemy) == 0):
             self.combocount = 0
 
-        if (distance < 1):
-            return LIGHT
-        if (distance < 5 and not primary_on_cooldown(player)):
-            return PRIMARY
+        # State Change depending on player/enemy hp
+        if (get_hp(player) <= 60):
+            self.state = "DEFENSIVE"
         else:
-            return FORWARD
+            self.state = "OFFENSIVE"
+
+        match self.state:
+            case "OFFENSIVE":
+                # Move forward to get to enemy
+                if (distance >= 2):
+                    if (not primary_on_cooldown(player) and get_hp(player) <= 80):
+                        return PRIMARY
+                    if (distance_to_projectile <= 3):
+                        return JUMP_FORWARD
+                    else:
+                        return FORWARD
+                else:
+                    if (not secondary_on_cooldown(player)):
+                        return SECONDARY
+                    else:
+                        if (get_stun_duration(enemy) >= 1):
+                            return LIGHT
+                        else:
+                            if (prev_move != 'block'):
+                                return BLOCK
+                            else:
+                                return LIGHT
+
+            case "DEFENSIVE":
+                # If stuck in wall
+                if (position[0] == 0 or position[0] == 15 and distance <= 2):
+                    return JUMP_FORWARD
+                # Retreat until a safe distance then heal
+                if (distance <= 2):
+                    return JUMP_BACKWARD
+                elif (distance <= 3):
+                    return BACK
+                else:
+                    return PRIMARY
+        return BACK

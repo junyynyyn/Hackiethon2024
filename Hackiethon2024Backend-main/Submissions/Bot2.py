@@ -10,7 +10,7 @@ from Game.gameSettings import HP, LEFTBORDER, RIGHTBORDER, LEFTSTART, RIGHTSTART
 # SECONDARY CAN BE : Hadoken, Grenade, Boomerang, Bear Trap
 
 # TODO FOR PARTICIPANT: Set primary and secondary skill here
-PRIMARY_SKILL = UppercutSkill
+PRIMARY_SKILL = Meditate
 SECONDARY_SKILL = Hadoken
 
 #constants, for easier move return
@@ -53,17 +53,37 @@ class Script:
         position = get_pos(player)
         enemy_pos = get_pos(enemy)
 
-        if distance <= 2:
-            if (enemy_pos[1] >= 1):
-                return PRIMARY
-            if (position[0] == 0 or position[0] == 15 and distance <= 2):
-                    return JUMP_FORWARD
+        # If heal skill is not on cooldown and hp < 80 then heal
+        # If far distance throw fireball (3+)
+        # If close range block then heavy punch then move back (1)
+        # If backed into a corner jump forward
+        # If mid range back away (2)
+        # Enemy skill counters: 
+        """
+        Dash: If dash is not on cooldown and we are within dash range, jump backwards
+        Grenade: If grenade is thrown, mark current position and move away from it
+        Bear Trap: Avoid bear trap position
+        Super Armor: Run and avoid until duration is over
+        One Punch: never get in range?
+        """
+
+        # Basic Gameplan
+        # If stuck in corner jump out
+        if (distance <= 2 and (position[0] == 0 or position[0] == 15)):
+            return JUMP_FORWARD
+        elif (distance >= 3):
+            return SECONDARY
+        elif (distance == 2):
+            if (get_past_move(enemy, 1) and get_past_move(enemy, 2)):
+                if (get_past_move(enemy, 1)[0] == 'move' and get_past_move(enemy, 2)[0] == 'move' and distance == 2):
+                    return HEAVY
             return BACK
-        else:
-            if not secondary_on_cooldown(player):
-                return SECONDARY
+
+        elif (distance == 1):
+            if (get_last_move(player)[0] != 'block'):
+                return BLOCK
             else:
-                NOMOVE
-        
-        return NOMOVE
-        
+                return BACK
+            
+        else:
+            return BACK
