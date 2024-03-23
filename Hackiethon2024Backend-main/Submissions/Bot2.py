@@ -43,6 +43,9 @@ class Script:
         self.primary = PRIMARY_SKILL
         self.secondary = SECONDARY_SKILL
         
+        self.hazard_pos = None
+        self.defensive_mode = False
+        
     # DO NOT TOUCH
     def init_player_skills(self):
         return self.primary, self.secondary
@@ -64,13 +67,22 @@ class Script:
         Grenade: If grenade is thrown, mark current position and move away from it
         Bear Trap: Avoid bear trap position
         Super Armor: Run and avoid until duration is over
-        One Punch: never get in range?
+        One Punch: never get in range? (never will get into range)
         """
 
-        # Basic Gameplan
+        # Enemy dash skill counter
+        if (get_primary_skill(enemy) == "dash_attack"):
+            if (not primary_on_cooldown(enemy)):
+                if (distance <= 5):
+                    return BLOCK
         
-        if (get_primary_skill(enemy) == "dash_attack" and distance <= 5 and not primary_on_cooldown(enemy)):
-            return BLOCK
+        #Countering super armor and super saiyan
+        if (get_secondary_skill(enemy) == "super_armor" or get_secondary_skill(enemy) == "super_saiyan"):
+            if (get_primary_cooldown(enemy) > 20):
+                self.defensive_mode = True
+            else:
+                self.defensive_mode = False
+                
         # If stuck in corner jump out
         if (distance <= 2 and (position[0] == 0 or position[0] == 15)):
             return JUMP_FORWARD
@@ -79,9 +91,13 @@ class Script:
                 return PRIMARY
             return SECONDARY
         elif (distance == 2):
-            if (get_past_move(enemy, 1) and get_past_move(enemy, 2)):
-                if (get_past_move(enemy, 1)[0] == 'move' and get_past_move(enemy, 2)[0] == 'move' and distance == 2):
-                    return HEAVY
+            # If enemy is chasing, throw a heavy attack to stun them
+            if (not self.defensive_mode):
+                if (get_past_move(enemy, 1) and get_past_move(enemy, 2)):
+                    if (get_past_move(enemy, 1)[0] == 'move' and get_past_move(enemy, 2)[0] == 'move' and distance == 2):
+                        return HEAVY
+                if (get_last_move(player) == HEAVY and not primary_on_cooldown(player)):
+                    return SECONDARY
             return BACK
 
         elif (distance == 1):
@@ -89,6 +105,6 @@ class Script:
                 return BLOCK
             else:
                 return BACK
-            
+
         else:
             return BACK
