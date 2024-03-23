@@ -13,9 +13,32 @@ HEAVY = ("heavy",)
 BLOCK = ("block",)
 
 NOMOVE = "NoMove"
+CANCEL = ("skill_cancel",)
 
 
 # helpful functions
+
+def compare_moves(move1, move2):
+    if move1 == move2:
+        return True
+    if (move1[0] == move2[0]):
+        if move1[0]  == "move":
+            return move1[1] == move2[1]
+        # both are moves get from get__move
+        if len(move1) > 1 and len(move2) > 1:
+            return move1[1] in ("activate", None) and move2[1] in ("activate", None)
+        # move 1 is a move from  bot code to be compared
+        if len(move1) == 1 and len(move2) > 1:
+            return move2[1] != "startup"
+        # move 2 is a move from bot code to be compared
+        if len(move1) > 1 and len(move2) == 1:
+            return move1[1] != "startup"
+        # both are bot code moves
+        if len(move1) == 1 and len(move2) == 1:
+            return True
+    return False
+        
+        
 def get_hp(player):
     return player.get_hp()
 
@@ -171,6 +194,7 @@ def heavy_combo(player, enemy):
     enemy_x, enemy_y = get_pos(enemy)
     if get_stun_duration(player):
         return NOMOVE
+    print(get_past_move(player, 1),get_past_move(player, 2))
     if player_y == enemy_y and abs(player_x - enemy_x) == 1:
         if get_past_move(player, 1) == LIGHT:
             if get_past_move(player, 2) == LIGHT:

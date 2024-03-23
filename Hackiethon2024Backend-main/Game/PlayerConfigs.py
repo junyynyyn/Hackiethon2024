@@ -50,7 +50,7 @@ class Player_Controller:
         if self._move_num < len(self._inputs) and self._inputs[self._move_num]:
             return self._inputs[self._move_num]
         else:   
-            return ("NoMove")
+            return ("NoMove", None)
            
     def get_pos(self):
         '''Returns player position -> (x, y) as (int, int)'''
@@ -111,7 +111,7 @@ class Player_Controller:
         
     def get_past_move(self, turns):
         if turns <= len(self._moves):
-            return (self._moves[-turns])
+            return self._moves[-turns]
         else:
             return None
         

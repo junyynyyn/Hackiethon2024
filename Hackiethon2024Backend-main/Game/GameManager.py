@@ -71,10 +71,10 @@ def executeOneTurn(player1, player2, p1_script, p2_script, p1_json_dict, p2_json
     p2_move = p2_script.get_move(player2, player1, p2_projectiles, p1_projectiles)
   
     # In case the scripts return None
-    if not p1_move:
-        p1_move = ("NoMove",)
-    if not p2_move:
-        p2_move = ("NoMove",)
+    if not p1_move or p1_move == "NoMove":
+        p1_move = ("NoMove", None)
+    if not p2_move or p2_move == "NoMove":
+        p2_move = ("NoMove", None)
         
     # Add their move to their list of inputs
     player1._inputs.append(p1_move)
@@ -150,7 +150,6 @@ def resetBlock(player):
 # Carries out player actions, return any resulting after effects to main loop  
 def performActions(player1, player2, act1, act2, stun1, stun2, projectiles):
     knock1 = knock2 = 0
-
     # Empty move if player is currently stunned or doing recovery ticks
     if player1._stun or player1._recovery:
         act1 = ("NoMove", "NoMove")
@@ -161,19 +160,18 @@ def performActions(player1, player2, act1, act2, stun1, stun2, projectiles):
     
     # Checks if player does something to cancel a skill
     if player1._mid_startup or player1._skill_state:
-        if player1._inputs[-1][0] in ("move", "block"):
+        if player1._inputs[-1][0] in ("skill_cancel", "move", "block"):
             player1._skill_state = False
             player1._mid_startup = False
         else:
             act1 = player1._moves[-1]
             
     if player2._mid_startup or player2._skill_state:
-        if player2._inputs[-1][0] in ("move", "block"):
+        if player2._inputs[-1][0] in ("skill_cancel", "move", "block"):
             player2._skill_state = False
             player2._mid_startup = False
         else:
             act2 = player2._moves[-1]
-        
     # Check if no valid move is input, or if the player is recovering 
     # If so, set act to None to prevent further checks
     if act1[0] not in (attack_actions.keys() | defense_actions.keys() | projectile_actions.keys()):
@@ -259,13 +257,13 @@ def performActions(player1, player2, act1, act2, stun1, stun2, projectiles):
         resetBlock(player2)
     dashed_1 = dashed_2 = False
     # move players if the attack caused them to move - dash attack
-    if isinstance(act1, tuple) and act1[0] == "dash_attack" and (knock1 or stun1):
+    if isinstance(act1, tuple) and act1[0] == "dash_attack" and player1._primary_skill.on_cooldown():
         #dash attack successful
         dash_range = player1.primary_range()
         player1._xCoord += player1._direction * dash_range
         dashed_1 = True
     
-    if isinstance(act2, tuple) and act2[0] == "dash_attack" and (knock2 or stun2):
+    if isinstance(act2, tuple) and act2[0] == "dash_attack" and player2._primary_skill.on_cooldown():
         #dash attack successful
         dash_range = player2.primary_range()
         player2._xCoord += player2._direction * dash_range

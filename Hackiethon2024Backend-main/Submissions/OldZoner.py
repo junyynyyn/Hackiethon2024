@@ -37,7 +37,7 @@ moves = SECONDARY,
 moves_iter = iter(moves)
 
 # TODO FOR PARTICIPANT: WRITE YOUR WINNING BOT
-# Zoning Bot
+# Ultra Aggro Bot
 class Script:
     def __init__(self):
         self.primary = PRIMARY_SKILL
@@ -45,8 +45,6 @@ class Script:
         
         self.hazard_pos = None
         self.defensive_mode = False
-        self.offensive_mode = False
-        self.opponent_jumps_corners = False
         
     # DO NOT TOUCH
     def init_player_skills(self):
@@ -57,13 +55,6 @@ class Script:
         distance = abs(get_pos(player)[0] - get_pos(enemy)[0])
         position = get_pos(player)
         enemy_pos = get_pos(enemy)
-        enemy_side = get_pos(player)[0] < enemy_pos[0]
-        # True = Player on left side, False = Player on right side
-
-        distance_to_projectile = 100
-        if(enemy_projectiles):
-            distance_to_projectile = abs(get_pos(player)[0] - get_proj_pos(enemy_projectiles[0])[0])
-            print(distance_to_projectile)
 
         # If heal skill is not on cooldown and hp < 80 then heal
         # If far distance throw fireball (3+)
@@ -77,7 +68,6 @@ class Script:
         Bear Trap: Avoid bear trap position
         Super Armor: Run and avoid until duration is over
         One Punch: never get in range? (never will get into range)
-        Projectile/Healing (How to beat our same strategy?) Rushdown into corner, hit while jumping out
         """
 
         # Enemy dash skill counter
@@ -92,49 +82,29 @@ class Script:
                 self.defensive_mode = True
             else:
                 self.defensive_mode = False
-
-        # If they use the same strategy as we do, rushdown into corner, either light combo them in the corner or catch them as they land if they jump overhead.
-        if (get_primary_skill(enemy) == "meditate" and (get_secondary_skill(enemy) == "hadoken" or get_secondary_skill(enemy) == "beartrap")):
-            
-            if (get_hp(player) >= 60): 
-                self.offensive_mode = True
-            else:
-                self.offensive_mode = False
-
-        if (not self.offensive_mode):
+                
         # If stuck in corner jump out
-            if (distance <= 2 and (position[0] == 0 or position[0] == 15)):
-                return JUMP_FORWARD
-            elif (distance >= 3):
-                if (get_primary_cooldown(player) <= 1):
-                    return PRIMARY
-                return SECONDARY
-            elif (distance == 2):
-                # If enemy is chasing, throw a heavy attack to stun them
-                if (not self.defensive_mode):
-                    if (get_past_move(enemy, 1) and get_past_move(enemy, 2)):
-                        if (get_past_move(enemy, 1)[0] == 'move' and get_past_move(enemy, 2)[0] == 'move' and distance == 2):
-                            return HEAVY
-                    if (get_last_move(player)[0] == 'heavy' and not secondary_on_cooldown(player)):
-                        return SECONDARY
+        if (distance <= 2 and (position[0] == 0 or position[0] == 15)):
+            return JUMP_FORWARD
+        elif (distance >= 3):
+            if (not primary_on_cooldown(player)):
+                return PRIMARY
+            return SECONDARY
+        elif (distance == 2):
+            # If enemy is chasing, throw a heavy attack to stun them
+            if (not self.defensive_mode):
+                if (get_past_move(enemy, 1) and get_past_move(enemy, 2)):
+                    if (get_past_move(enemy, 1)[0] == 'move' and get_past_move(enemy, 2)[0] == 'move' and distance == 2):
+                        return HEAVY
+                if (get_last_move(player) == HEAVY and not primary_on_cooldown(player)):
+                    return SECONDARY
+            return BACK
+
+        elif (distance == 1):
+            if (get_last_move(player)[0] != 'block'):
+                return BLOCK
+            else:
                 return BACK
-            
-            # If in short range, block (for lights) then retreat
-            elif (distance == 1):
-                if (get_last_move(player)[0] != 'block'):
-                    return BLOCK
-                else:
-                    return BACK
 
         else:
-            if (distance > 2):
-                if (get_primary_cooldown(player) <= 1 and get_hp(player) <= 80):
-                    return PRIMARY
-                if (distance_to_projectile <= 2):
-                    return BLOCK
-                else:
-                    return FORWARD
-            if (distance == 2):
-                return SECONDARY
-            else:
-                return FORWARD
+            return BACK
