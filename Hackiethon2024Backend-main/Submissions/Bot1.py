@@ -10,8 +10,8 @@ from Game.gameSettings import HP, LEFTBORDER, RIGHTBORDER, LEFTSTART, RIGHTSTART
 # SECONDARY CAN BE : Hadoken, Grenade, Boomerang, Bear Trap
 
 # TODO FOR PARTICIPANT: Set primary and secondary skill here
-PRIMARY_SKILL = DashAttackSkill
-SECONDARY_SKILL = SuperSaiyanSkill
+PRIMARY_SKILL = TeleportSkill
+SECONDARY_SKILL = Hadoken
 
 #constants, for easier move return
 #movements
@@ -65,7 +65,7 @@ class Script:
             self.combocount = 0
 
         if (distance < 1):
-            return LIGHT
+            return HEAVY
         if (distance < 5 and not primary_on_cooldown(player)):
             return PRIMARY
         else:

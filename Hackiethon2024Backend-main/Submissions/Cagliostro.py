@@ -10,8 +10,8 @@ from Game.gameSettings import HP, LEFTBORDER, RIGHTBORDER, LEFTSTART, RIGHTSTART
 # SECONDARY CAN BE : Hadoken, Grenade, Boomerang, Bear Trap
 
 # TODO FOR PARTICIPANT: Set primary and secondary skill here
-PRIMARY_SKILL = Meditate
-SECONDARY_SKILL = Hadoken
+PRIMARY_SKILL = TeleportSkill
+SECONDARY_SKILL = BearTrap
 
 #constants, for easier move return
 #movements
@@ -37,7 +37,7 @@ moves = SECONDARY,
 moves_iter = iter(moves)
 
 # TODO FOR PARTICIPANT: WRITE YOUR WINNING BOT
-# Zoning Bot
+# Cagliostro Bot
 class Script:
     def __init__(self):
         self.primary = PRIMARY_SKILL
@@ -49,7 +49,7 @@ class Script:
 
         self.opponent_cornered = False
         self.opponent_jumps_corners = False
-        self.combo_counter = False
+        self.combo_counter = 0
         
     # DO NOT TOUCH
     def init_player_skills(self):
@@ -67,6 +67,12 @@ class Script:
         if(enemy_projectiles):
             distance_to_projectile = abs(get_pos(player)[0] - get_proj_pos(enemy_projectiles[0])[0])
             print(distance_to_projectile)
+
+        trap_position = (0,0)
+        trap_distance = 0
+        if (player_projectiles):
+            trap_position = get_proj_pos(player_projectiles[0])
+            trap_distance = abs(get_pos(player)[0] - get_pos(trap_position)[0])
 
         # If heal skill is not on cooldown and hp < 80 then heal
         # If far distance throw fireball (3+)
@@ -87,7 +93,7 @@ class Script:
         if (get_primary_skill(enemy) == "dash_attack"):
             if (not primary_on_cooldown(enemy)):
                 if (distance <= 5):
-                    return BLOCK
+                    return PRIMARY
         #Countering super armor and super saiyan
         if (get_secondary_skill(enemy) == "super_armor" or get_secondary_skill(enemy) == "super_saiyan"):
             if (get_secondary_cooldown(enemy) > 20):
@@ -95,55 +101,38 @@ class Script:
             else:
                 self.defensive_mode = False
 
-        # If they use the same strategy as we do, rushdown into corner, either light combo them in the corner or catch them as they land if they jump overhead.
-        if (get_primary_skill(enemy) == "meditate" and (get_secondary_skill(enemy) == "hadoken" or get_secondary_skill(enemy) == "beartrap")):
-            if (get_hp(player) >= 60): 
-                self.offensive_mode = True
-            else:
-                self.offensive_mode = False
 
-        if (not self.offensive_mode):
+        # Keep trap between enemy and player 
+        # If on the same side, Jump over and teleport
+        # If enemy gets stunned by bear trap, move in to combo
         # If stuck in corner jump out
-            if (distance <= 2 and (position[0] == 0 or position[0] == 15)):
-                return JUMP_FORWARD
-            elif (distance >= 3):
-                if (get_primary_cooldown(player) <= 1 and get_hp(player) <= 90):
-                    return PRIMARY
-                return SECONDARY
-            elif (distance == 2):
-                # If enemy is chasing, throw a heavy attack to stun them then move away
-                if (not self.defensive_mode):
-                    if (get_past_move(enemy, 1) and get_past_move(enemy, 2)):
-                        if (get_past_move(enemy, 1)[0] == 'move' and get_past_move(enemy, 2)[0] == 'move' and distance == 2):
-                            return HEAVY
-                    if (get_last_move(player)[0] == 'heavy' and not secondary_on_cooldown(player)):
-                        return SECONDARY
-                return BACK
-            
-            # If in short range, block (for lights) then retreat
-            elif (distance == 1):
-                if (get_last_move(player)[0] != 'block'):
-                    return BLOCK
-                else:
-                    return BACK
-
-        else:
-            if (self.opponent_cornered == True and get_last_move(enemy) == ('move', (1,1))):
-                self.opponent_jumps_corners = True
-                
-            if (distance > 2):
-                if (get_primary_cooldown(player) <= 1 and get_hp(player) <= 90):
-                    return PRIMARY
-                if (distance_to_projectile <= 2):
-                    return BLOCK
-                else:
-                    return FORWARD
-            if (distance == 2):
-                # If enemy is in corner
-                if (enemy_pos[0] == 0 or enemy_pos[0] == 15):
-                    self.opponent_cornered = True
-                else:
-                    self.opponent_cornered = False
-                return SECONDARY
-            else:
+        if (distance <= 2 and (position[0] == 0 or position[0] == 15)):
+            if (get_primary_cooldown(player) <= 1):
+                return PRIMARY
+            return JUMP_FORWARD
+        # If enemy is on the opposite side of trap
+        if (distance > trap_distance):
+            if (trap_distance >= 2):
                 return FORWARD
+            else:
+                return NOMOVE
+        else:
+            return PRIMARY
+        if (distance >= 3):
+            return SECONDARY
+        elif (distance == 2):
+            # If enemy is chasing, throw a heavy attack to stun them then move away
+            if (not self.defensive_mode):
+                if (get_past_move(enemy, 1) and get_past_move(enemy, 2)):
+                    if (get_past_move(enemy, 1)[0] == 'move' and get_past_move(enemy, 2)[0] == 'move' and distance == 2):
+                        return HEAVY
+                if (get_last_move(player)[0] == 'heavy' and not secondary_on_cooldown(player)):
+                    return SECONDARY
+            return BACK
+        
+        # If in short range, block (for lights) then retreat
+        elif (distance == 1):
+            if (get_last_move(player)[0] != 'block'):
+                return BLOCK
+            else:
+                return BACK

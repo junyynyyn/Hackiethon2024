@@ -65,7 +65,7 @@ class Script:
             self.combocount = 0
 
         if (distance < 1):
-            return LIGHT
+            return HEAVY
         if (distance < 5 and not primary_on_cooldown(player)):
             return PRIMARY
         else:
