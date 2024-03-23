@@ -68,10 +68,15 @@ class Script:
         """
 
         # Basic Gameplan
+        
+        if (get_primary_skill(enemy) == "dash_attack" and distance <= 5 and not primary_on_cooldown(enemy)):
+            return BLOCK
         # If stuck in corner jump out
         if (distance <= 2 and (position[0] == 0 or position[0] == 15)):
             return JUMP_FORWARD
         elif (distance >= 3):
+            if (not primary_on_cooldown(player)):
+                return PRIMARY
             return SECONDARY
         elif (distance == 2):
             if (get_past_move(enemy, 1) and get_past_move(enemy, 2)):
